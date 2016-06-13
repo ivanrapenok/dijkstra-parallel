@@ -1,9 +1,9 @@
 /**
- * Created by dagon on 6/12/2016.
+ * Created by ivanchic on 6/12/2016.
  */
 public class Main {
     public static void main(String[] args) {
-        System.out.println("a start");
-        System.out.println("develop branch");
+        int[][] graph = DijkstraAlgorithm.createGraph();
+        int[][] res = DijkstraAlgorithm.dijkstra(graph, 0);
     }
 }
