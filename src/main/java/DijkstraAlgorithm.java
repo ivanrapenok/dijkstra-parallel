@@ -8,26 +8,41 @@ import static java.util.Arrays.fill;
  */
 class DijkstraAlgorithm {
 
-    private static int INF = Integer.MAX_VALUE / 2; // Infinity
+    public static int INF = Integer.MAX_VALUE / 2; // Infinity
 
-    public int[][] graph;
-    public int start, threadsCount, vNum;
+    public int[][] graph;   // the analyzed graph
+    public int start, threadsCount, vNum; // source vertex, count of threads, count of vertex
+
+    public boolean[] used; // array of labels
+    public int[] dist; // dist[v] is shortest path between nodes start and v
+    public int[] prev; // array of previous vertex
+    public volatile int[] nDist; // dist[v] is local shortest path between nodes start and v
+    public volatile int[] newVertex;
 
     private int localSection = 0;
+
 
     public DijkstraAlgorithm(int start, int threadsCount) {
         this.graph = this.createGraph();
         this.start = start;
         this.threadsCount = threadsCount;
         vNum = this.graph.length;
+        used = new boolean [vNum];
+        dist = new int[vNum];
+        prev = new int[vNum];
     }
 
     public synchronized void incrementLocalSection() {
         localSection++;
     }
 
+    public synchronized void decrementLocalSection() {
+        localSection--;
+    }
+
     public void localSectionOn() {
         localSection = 0;
+        notifyAll();
     }
 
     public synchronized void waitLocalSection() throws InterruptedException {
@@ -41,18 +56,15 @@ class DijkstraAlgorithm {
     }
 
     int[][] dijkstraParallel() {
-        boolean[] used = new boolean [vNum]; // array of labels
-        int[] dist = new int[vNum]; // dist[v] is shortest path between nodes start and v
-        int[] prev = new int[vNum]; // array of previous vertex
+        nDist = new int[threadsCount];
+        newVertex = new int[threadsCount];
+
+
 
         return null;
     }
 
     int[][] dijkstra() {
-        boolean[] used = new boolean [vNum]; // array of labels
-        int[] dist = new int[vNum]; // dist[v] is shortest path between nodes start and v
-        int[] prev = new int[vNum]; // array of previous vertex
-
         fill(dist, INF);
         fill(prev, -1);
 
