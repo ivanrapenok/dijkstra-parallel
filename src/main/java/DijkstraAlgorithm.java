@@ -10,8 +10,45 @@ class DijkstraAlgorithm {
 
     private static int INF = Integer.MAX_VALUE / 2; // Infinity
 
-    static int[][] dijkstra(int[][] graph, int start) {
-        int vNum = graph.length;
+    public int[][] graph;
+    public int start, threadsCount, vNum;
+
+    private int localSection = 0;
+
+    public DijkstraAlgorithm(int start, int threadsCount) {
+        this.graph = this.createGraph();
+        this.start = start;
+        this.threadsCount = threadsCount;
+        vNum = this.graph.length;
+    }
+
+    public synchronized void incrementLocalSection() {
+        localSection++;
+    }
+
+    public void localSectionOn() {
+        localSection = 0;
+    }
+
+    public synchronized void waitLocalSection() throws InterruptedException {
+        while (localSection != 0)
+            wait();
+    }
+
+    public synchronized void waitGlobalSection() throws InterruptedException {
+        while (localSection != 7)
+            wait();
+    }
+
+    int[][] dijkstraParallel() {
+        boolean[] used = new boolean [vNum]; // array of labels
+        int[] dist = new int[vNum]; // dist[v] is shortest path between nodes start and v
+        int[] prev = new int[vNum]; // array of previous vertex
+
+        return null;
+    }
+
+    int[][] dijkstra() {
         boolean[] used = new boolean [vNum]; // array of labels
         int[] dist = new int[vNum]; // dist[v] is shortest path between nodes start and v
         int[] prev = new int[vNum]; // array of previous vertex
@@ -41,7 +78,7 @@ class DijkstraAlgorithm {
         return null;
     }
 
-    static int[][] createGraph() {
+    int[][] createGraph() {
         return new int[][]{
                 {0, 1, 4, INF, INF, INF, INF, INF},
                 {1, 0, 2, INF, INF, INF, 4, 2},

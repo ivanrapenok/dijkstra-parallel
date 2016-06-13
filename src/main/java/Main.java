@@ -3,7 +3,7 @@
  */
 public class Main {
     public static void main(String[] args) {
-        int[][] graph = DijkstraAlgorithm.createGraph();
-        int[][] res = DijkstraAlgorithm.dijkstra(graph, 0);
+        DijkstraAlgorithm dijkstraAlgorithm = new DijkstraAlgorithm(0, 1);
+        int[][] res = dijkstraAlgorithm.dijkstra();
     }
 }
