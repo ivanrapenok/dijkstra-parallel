@@ -82,12 +82,12 @@ public class GraphGenerator {
         fill();
         connectAllVertices();
         createAdditionLinks();
-        for (int i = 0; i < vertexCount; i++) {
+        /*for (int i = 0; i < vertexCount; i++) {
             for (int j = 0; j < vertexCount; j++) {
                 System.out.print(graph[i][j] + "  ");
             }
             System.out.println();
-        }
+        }*/
         return graph;
     }
 }

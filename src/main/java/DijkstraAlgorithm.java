@@ -1,4 +1,3 @@
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -42,7 +41,8 @@ class DijkstraAlgorithm {
         prev = new int[vNum];
     }
 
-    int[][] dijkstraParallel() {
+    int[][] dijkstraParallel(int tr) {
+        threadsCount = tr;
         State state = new State(threadsCount);
 
         fill(dist, INF);
@@ -59,15 +59,12 @@ class DijkstraAlgorithm {
         for (int i = 0; i < threadsCount; i++) {
             int first = i * vertexInSubgroup;
             int last = (first + vertexInSubgroup > vNum) ? vNum : first + vertexInSubgroup;
-            //System.out.println(i + " f=" + first + " l=" + last);
             exec.execute(new DijkstraThread(i, first, last, this, state));
         }
 
         try {
             state.waitForGlobal();
             while(true) {
-                //System.out.println("MAIN " + Arrays.toString(nDist));
-                //System.out.println("MAIN " + Arrays.toString(newVertex));
                 for (int i = threadsCount - 1; i > 0; i--) {
                     if (state.getnDist(i) < state.getnDist(i - 1)) {
                         state.setnDist(i - 1, state.getnDist(i));
@@ -78,9 +75,6 @@ class DijkstraAlgorithm {
                         state.setnDist(i, state.getnDist(0));
                         state.setNewVertex(i, state.getNewVertex(0));
                 }
-                //System.out.println("MAIN " + Arrays.toString(nDist));
-                //System.out.println("MAIN " + Arrays.toString(newVertex));
-                //System.out.println("MAIN 0-" + state.getNewVertex(0) + " dist " + state.getnDist(0) + " " + Arrays.toString(used));
                 if (state.getNewVertex(0) == INF) break;
                 state.globalCompleted();
                 state.waitForGlobal();
@@ -89,8 +83,8 @@ class DijkstraAlgorithm {
 
         }
         exec.shutdownNow();
-        System.out.println(Arrays.toString(dist));
-        System.out.println(Arrays.toString(prev));
+        //System.out.println(Arrays.toString(dist));
+        //System.out.println(Arrays.toString(prev));
         return null;
     }
 
@@ -117,8 +111,8 @@ class DijkstraAlgorithm {
                 }
         }
 
-        System.out.println(Arrays.toString(dist));
-        System.out.println(Arrays.toString(prev));
+        //System.out.println(Arrays.toString(dist));
+        //System.out.println(Arrays.toString(prev));
         return null;
     }
 
