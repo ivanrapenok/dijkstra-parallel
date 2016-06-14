@@ -31,8 +31,19 @@ class DijkstraAlgorithm {
         prev = new int[vNum];
     }
 
+    public DijkstraAlgorithm(int start, int threadsCount, int[][] graph) {
+        this.graph = graph;
+        //this.graph = this.createGraph();
+        this.start = start;
+        this.threadsCount = threadsCount;
+        vNum = this.graph.length;
+        used = new boolean [vNum];
+        dist = new int[vNum];
+        prev = new int[vNum];
+    }
+
     int[][] dijkstraParallel() {
-        Car car = new Car(threadsCount);
+        State state = new State(threadsCount);
 
         fill(dist, INF);
         fill(prev, -1);
@@ -49,30 +60,30 @@ class DijkstraAlgorithm {
             int first = i * vertexInSubgroup;
             int last = (first + vertexInSubgroup > vNum) ? vNum : first + vertexInSubgroup;
             //System.out.println(i + " f=" + first + " l=" + last);
-            exec.execute(new DijkstraThread(i, first, last, this, car));
+            exec.execute(new DijkstraThread(i, first, last, this, state));
         }
 
         try {
-            car.waitForGlobal();
+            state.waitForGlobal();
             while(true) {
                 //System.out.println("MAIN " + Arrays.toString(nDist));
                 //System.out.println("MAIN " + Arrays.toString(newVertex));
                 for (int i = threadsCount - 1; i > 0; i--) {
-                    if (car.getnDist(i) < car.getnDist(i - 1)) {
-                        car.setnDist(i - 1, car.getnDist(i));
-                        car.setNewVertex(i - 1, car.getNewVertex(i));
+                    if (state.getnDist(i) < state.getnDist(i - 1)) {
+                        state.setnDist(i - 1, state.getnDist(i));
+                        state.setNewVertex(i - 1, state.getNewVertex(i));
                     }
                 }
                 for (int i = 0; i < threadsCount; i++) {
-                        car.setnDist(i, car.getnDist(0));
-                        car.setNewVertex(i, car.getNewVertex(0));
+                        state.setnDist(i, state.getnDist(0));
+                        state.setNewVertex(i, state.getNewVertex(0));
                 }
                 //System.out.println("MAIN " + Arrays.toString(nDist));
                 //System.out.println("MAIN " + Arrays.toString(newVertex));
-                //System.out.println("MAIN 0-" + car.getNewVertex(0) + " dist " + car.getnDist(0) + " " + Arrays.toString(used));
-                if (car.getNewVertex(0) == INF) break;
-                car.globalCompleted();
-                car.waitForGlobal();
+                //System.out.println("MAIN 0-" + state.getNewVertex(0) + " dist " + state.getnDist(0) + " " + Arrays.toString(used));
+                if (state.getNewVertex(0) == INF) break;
+                state.globalCompleted();
+                state.waitForGlobal();
             }
         } catch (InterruptedException e) {
 

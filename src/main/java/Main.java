@@ -3,7 +3,10 @@
  */
 public class Main {
     public static void main(String[] args) {
-        DijkstraAlgorithm dijkstraAlgorithm = new DijkstraAlgorithm(0, 3);
+        GraphGenerator generator = new GraphGenerator(30, 15, 30);
+        int[][] graph = generator.generateGraph();
+
+        DijkstraAlgorithm dijkstraAlgorithm = new DijkstraAlgorithm(0, 3, graph);
 
         long start = System.currentTimeMillis();
         int[][] res = dijkstraAlgorithm.dijkstra();
@@ -14,6 +17,5 @@ public class Main {
         res = dijkstraAlgorithm.dijkstraParallel();
         finish = System.currentTimeMillis();
         System.out.println("time for parallel algorithm: " + (finish - start) + "\n");
-
     }
 }
