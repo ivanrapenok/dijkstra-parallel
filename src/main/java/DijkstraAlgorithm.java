@@ -1,4 +1,6 @@
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.lang.Math.min;
 import static java.util.Arrays.fill;
@@ -14,13 +16,10 @@ class DijkstraAlgorithm {
     public int start, threadsCount, vNum; // source vertex, count of threads, count of vertex
 
     public boolean[] used; // array of labels
-    public int[] dist; // dist[v] is shortest path between nodes start and v
+    public volatile int[] dist; // dist[v] is shortest path between nodes start and v
     public int[] prev; // array of previous vertex
-    public volatile int[] nDist; // dist[v] is local shortest path between nodes start and v
-    public volatile int[] newVertex;
-
-    private int localSection = 0;
-
+    //public volatile int[] nDist; // dist[v] is local shortest path between nodes start and v
+    //public volatile int[] newVertex;
 
     public DijkstraAlgorithm(int start, int threadsCount) {
         this.graph = this.createGraph();
@@ -32,41 +31,62 @@ class DijkstraAlgorithm {
         prev = new int[vNum];
     }
 
-    public synchronized void incrementLocalSection() {
-        localSection++;
-    }
-
-    public synchronized void decrementLocalSection() {
-        localSection--;
-    }
-
-    public void localSectionOn() {
-        localSection = 0;
-        notifyAll();
-    }
-
-    public synchronized void waitLocalSection() throws InterruptedException {
-        while (localSection != 0)
-            wait();
-    }
-
-    public synchronized void waitGlobalSection() throws InterruptedException {
-        while (localSection != 7)
-            wait();
-    }
-
     int[][] dijkstraParallel() {
-        nDist = new int[threadsCount];
-        newVertex = new int[threadsCount];
+        Car car = new Car(threadsCount);
 
+        fill(dist, INF);
+        fill(prev, -1);
+        fill(used, false);
 
+        dist[start] = 0;
 
+        //nDist = new int[threadsCount];
+        //newVertex = new int[threadsCount];
+
+        ExecutorService exec = Executors.newCachedThreadPool();
+        int vertexInSubgroup = (vNum + (threadsCount - 1))/threadsCount;
+        for (int i = 0; i < threadsCount; i++) {
+            int first = i * vertexInSubgroup;
+            int last = (first + vertexInSubgroup > vNum) ? vNum : first + vertexInSubgroup;
+            //System.out.println(i + " f=" + first + " l=" + last);
+            exec.execute(new DijkstraThread(i, first, last, this, car));
+        }
+
+        try {
+            car.waitForGlobal();
+            while(true) {
+                //System.out.println("MAIN " + Arrays.toString(nDist));
+                //System.out.println("MAIN " + Arrays.toString(newVertex));
+                for (int i = threadsCount - 1; i > 0; i--) {
+                    if (car.getnDist(i) < car.getnDist(i - 1)) {
+                        car.setnDist(i - 1, car.getnDist(i));
+                        car.setNewVertex(i - 1, car.getNewVertex(i));
+                    }
+                }
+                for (int i = 0; i < threadsCount; i++) {
+                        car.setnDist(i, car.getnDist(0));
+                        car.setNewVertex(i, car.getNewVertex(0));
+                }
+                //System.out.println("MAIN " + Arrays.toString(nDist));
+                //System.out.println("MAIN " + Arrays.toString(newVertex));
+                //System.out.println("MAIN 0-" + car.getNewVertex(0) + " dist " + car.getnDist(0) + " " + Arrays.toString(used));
+                if (car.getNewVertex(0) == INF) break;
+                car.globalCompleted();
+                car.waitForGlobal();
+            }
+        } catch (InterruptedException e) {
+
+        }
+        exec.shutdownNow();
+        System.out.println(Arrays.toString(dist));
+        System.out.println(Arrays.toString(prev));
         return null;
     }
 
     int[][] dijkstra() {
         fill(dist, INF);
         fill(prev, -1);
+        fill(used, false);
 
         dist[start] = 0;
 
@@ -76,6 +96,7 @@ class DijkstraAlgorithm {
             for (int nv = 0; nv < vNum; nv++) // iterate vertex
                 if (!used[nv] && dist[nv] < INF && (v == -1 || dist[v] > dist[nv])) // choose the closest and not marked vertex
                     v = nv;
+            //System.out.println(" run vertex " + v);
             if (v == -1) break; // the closest vertex not found
             used[v] = true; // marked the closest vertex
             for (int nv = 0; nv < vNum; nv++)
